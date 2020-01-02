@@ -1,0 +1,7 @@
+{
+  "api_key": "my_apikey",
+  "api_secret": "my_apisecret",
+  "cluster_api_endpoint": "https://cluster.typo.ai/management/api/v1",
+  "dataset": "my_dataset",
+  "audit_id": "some_audit_id"
+}
