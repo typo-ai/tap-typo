@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # Copyright 2019 Typo
 #
 #
@@ -31,7 +32,6 @@
 # This product includes software developed at
 #
 # or by Typo (https://www.typo.ai/).
-#!/usr/bin/env python
 from setuptools import setup, find_packages
 from os import path
 
@@ -44,10 +44,11 @@ def read(*paths):
 
 setup(
     name='tap-typo',
-    version='0.1.0',
-    description=('Typo is the intelligent data quality barrier for '
-                    'enterprise information systems. The Typo tap '
-                    'retrieves results and data from the Typo platform.'),
+    version='0.2.0',
+    description=(
+        'Typo is the intelligent data quality barrier for '
+        'enterprise information systems. The Typo tap '
+        'retrieves results and data from the Typo platform.'),
     long_description=read('README.md'),
     long_description_content_type='text/markdown',
     author='Typo',
@@ -70,7 +71,7 @@ setup(
     ],
     py_modules=['tap_typo'],
     packages=find_packages(),
-    package_data = {
+    package_data={
         'schemas': ['tap_typo/schemas/*.json']
     },
     include_package_data=True,
@@ -78,6 +79,8 @@ setup(
         'singer-python>=5.0.12',
         'requests>=2.21.0',
         'jsonschema>=2.6.0,<3.0a',
+        'backoff==1.8.0',
+        'rfc3339==6.2'
     ],
     entry_points={
         'console_scripts': [

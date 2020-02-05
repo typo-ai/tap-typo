@@ -1,4 +1,7 @@
-# Copyright 2019 Typo. All Rights Reserved.
+'''
+TapTypo tests
+'''
+# Copyright 2019-2020 Typo. All Rights Reserved.
 #
 #
 #
@@ -31,216 +34,166 @@
 # This product includes software developed at
 #
 # or by Typo (https://www.typo.ai/).
-# !/usr/bin/env python3
-# 11, 20, 29
 
+from io import StringIO
 import json
 import unittest
 from unittest.mock import patch
-import tap_typo.__init__ as init
-from tap_typo.typo import TypoTap
+import singer
+
+from tap_typo.typo import TapTypo
+from test_utils.mock_functions import (
+    mock_tap_get_dataset_information_empty, mock_requests_get_test_discover_mode,
+    mock_requests_get_test_resume_with_state, mock_requests_get_test_get_simple_audit_dataset,
+    mock_requests_get_test_get_simple_streaming_dataset, mock_requests_get_test_multi_page_no_limit,
+    mock_requests_post_get_token
+)
+from test_utils.outputs import (
+    TEST_DISCOVER_MODE_OUTPUT, TEST_RESUME_WITH_STATE_OUTPUT,
+    TEST_GET_SIMPLE_AUDIT_DATASET_OUTPUT, TEST_GET_SIMPLE_STREAMING_DATASET_OUTPUT,
+    TEST_MULTI_PAGE_NO_LIMIT_OUTPUT
+)
+from test_utils.utils import generate_config
+
+# Singer Logger
+LOGGER = singer.get_logger()
 
 
-class TestTypo(unittest.TestCase):
+class TestTapTypo(unittest.TestCase):
+    '''
+    TapTypo tests
+    '''
+    maxDiff = None  # Get the full diff when debugging tests
 
     @patch('tap_typo.typo.requests.post')
+    # Mock get_dataset_information because it's called when TapTypo is initialized
+    @patch('tap_typo.typo.TapTypo.get_dataset_information', new=mock_tap_get_dataset_information_empty)
     def test_request_token(self, mock_post):
-        print("Test: When API key and API secret are provided, a token",
-              "property should be returned in the API return.")
-
-        # Mock returns
+        '''
+        Request an access token from Typo
+        '''
         mock_post.return_value.status_code = 200
-        mock_post.return_value.json.return_value = {"token": "test"}
+        mock_post.return_value.json.return_value = {'token': 'test'}
 
-        # Mock parameters
-        typo_1 = TypoTap(
-            cluster_api_endpoint='https://www.mock.com',
-            api_key='typo_key',
-            api_secret='typo_secret',
-            repository='mock',
-            dataset='mock',
-            audit_id='123'
-        )
+        with self.assertLogs(LOGGER, level='INFO') as log:
+            tap = TapTypo(config=generate_config())
+
+        self.assertEqual(len(log.output), 1)
 
         expected_headers = {
-            "Content-Type": "application/json"
-        }
-        expected_payload = {
-            "apikey": "typo_key",
-            "secret": "typo_secret"
+            'Content-Type': 'application/json'
         }
 
-        token = typo_1.request_token()
+        expected_payload = {
+            'apikey': 'typo_key',
+            'secret': 'typo_secret'
+        }
+
+        token = tap.request_token()
+
         mock_post.assert_called_with(
-            'https://www.mock.com/token', data=json.dumps(expected_payload), headers=expected_headers)
+            'https://typo.ai/token',
+            data=json.dumps(expected_payload),
+            headers=expected_headers,
+            timeout=20
+        )
         self.assertEqual(token, 'test')
 
-    @patch('tap_typo.typo.requests.get')
-    def test_valid_get_dataset_without_errors(self, mock_get):
-        print('Test: When dataset is provided with an audit id, API should return a "data" property ',
-              'with the processed datasets from Typo. Audit results (OK) will be inserted into the dataset ',
-              'if no errors are found.')
-
-        # Mock returns
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.json.return_value = {
-            'code': 'GET_AUDIT_RESULTS_SUCCESS',
-            'message': 'Get audit results success',
-            'data': [
-                {
-                    'tag': '',
-                    'qualityLabel': 'Not Set',
-                    'qualityFeedback': '',
-                    'data': {
-                        'date': 'today',
-                        'typo': 'tap'
-                    },
-                    'hasErrors': 0
-                }
-            ]
-        }
-
-        # Mock Parameters
-        typo_2 = TypoTap(
-            cluster_api_endpoint='https://www.mock.com',
-            api_key='typo_key',
-            api_secret='typo_secret',
-            repository='mock_repo',
-            dataset='mock_dataset',
-            audit_id='123'
-        )
-        typo_2.token = '123'
-
-        expected_headers = {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer 123"
-        }
-
-        # Expected function return
-        expected_return = [
-            {
-                'date': 'today',
-                'typo': 'tap',
-                '__typo_result': 'OK'
-            }
-        ]
-
-
-        data_out = typo_2.get_dataset("mock_dataset")
-        mock_get.assert_called_with(
-            'https://www.mock.com/repositories/mock_repo/datasets/mock_dataset/audits/123/results', headers=expected_headers, params=None)
-        self.assertEqual(data_out, expected_return)
-    
-    @patch('tap_typo.typo.requests.get')
-    def test_valid_get_dataset_with_errors(self, mock_get):
-        print('Test: When dataset is provided with an audit id, API should return a "data" property ',
-              'with the processed datasets from Typo. Audit results (Error) will be inserted into the dataset ',
-              'if errors are found.')
-
-        # Mock returns
-        mock_get.return_value.status_code = 200
-        mock_get.return_value.json.return_value = {
-            'code': 'GET_AUDIT_RESULTS_SUCCESS',
-            'message': 'Get audit results success',
-            'data': [
-                {
-                    'tag': '',
-                    'qualityLabel': 'Not Set',
-                    'qualityFeedback': '',
-                    'data': {
-                        'date': 'today',
-                        'typo': 'tap'
-                    },
-                    'hasErrors': 1
-                }
-            ]
-        }
-
-        # Mock Parameters
-        typo_2 = TypoTap(
-            cluster_api_endpoint='https://www.mock.com',
-            api_key='typo_key',
-            api_secret='typo_secret',
-            repository='mock_repo',
-            dataset='mock_dataset',
-            audit_id='123'
-        )
-        typo_2.token = '123'
-
-        expected_headers = {
-            "Content-Type": "application/json",
-            "Authorization": "Bearer 123"
-        }
-
-        # Expected function return
-        expected_return = [
-            {
-                'date': 'today',
-                'typo': 'tap',
-                '__typo_result': 'Error'
-            }
-        ]
-
-
-        data_out = typo_2.get_dataset("mock_dataset")
-        mock_get.assert_called_with(
-            'https://www.mock.com/repositories/mock_repo/datasets/mock_dataset/audits/123/results', headers=expected_headers, params=None)
-        self.assertEqual(data_out, expected_return)
-
-    @patch('tap_typo.typo.requests.get')
-    def test_invalid_get_dataset(self, mock_get):
-        print('Test: When a request is not valid, tap-typo should exit with guidance on what went',
-              'wrong with the request.')
-
-        # Mock returns
-        mock_get.return_value.status_code = 400
-        mock_get.return_value.json.return_value = {
-            "message": "GET request failed."}
-        
-        # Mock Parameters
-        typo_3 = TypoTap(
-            cluster_api_endpoint='https://www.mock.com',
-            api_key='typo_key',
-            api_secret='typo_secret',
-            repository='mock',
-            dataset='mock',
-            audit_id='123'
-        )
-        typo_3.token = '123'
-
-        with self.assertRaises(SystemExit) as cm:
-            typo_3.get_dataset("mock")
-        self.assertEqual(cm.exception.code, 1)
-
+    @patch('tap_typo.typo.requests.post', new=mock_requests_post_get_token)
+    @patch('tap_typo.typo.requests.get', new=mock_requests_get_test_discover_mode)
     def test_discover_mode(self):
-        print('Test: In discover mode, a "generic" schema will be provided.')
+        '''
+        tap-typo will fetch the schema from Typo and construct a catalog
+        with the stream information.
 
-        # Expected function return
-        expected_return = {
-            'streams': [
-                {
-                    'stream': 'channel', 
-                    'tap_stream_id': 'channel', 
-                    'schema': {
-                        'type': [
-                            'null', 
-                            'object'
-                        ],
-                        'additionalProperties': True, 
-                        'properties': {}
-                    }, 
-                    'metadata': [], 
-                    'key_properties': []
+        Verified on this test:
+        - Discover mode output.
+        - Conversion of typo-provided field types into JSON schema types.
+        - Detection of key properties from typo-provided data.
+        '''
+
+        out = None
+
+        with patch('sys.stdout', new=StringIO()) as mock_stdout, self.assertLogs(LOGGER, level='INFO') as log:
+            tap = TapTypo(config=generate_config())
+            tap.discover()
+            out = mock_stdout.getvalue()
+
+        self.assertEqual(len(log.output), 1)
+
+        self.assertEqual(out, TEST_DISCOVER_MODE_OUTPUT)
+
+    @patch('tap_typo.typo.requests.post', new=mock_requests_post_get_token)
+    @patch('tap_typo.typo.requests.get', new=mock_requests_get_test_get_simple_audit_dataset)
+    def test_get_simple_audit_dataset(self):
+        '''
+        Fetch a simple dataset with 2 records from Typo
+        '''
+        out = None
+        with patch('sys.stdout', new=StringIO()) as mock_stdout, self.assertLogs(LOGGER, level='INFO') as log:
+            tap = TapTypo(config=generate_config())
+            tap.sync()
+            out = mock_stdout.getvalue()
+
+        self.assertEqual(len(log.output), 4)
+
+        self.assertEqual(out, TEST_GET_SIMPLE_AUDIT_DATASET_OUTPUT)
+
+    @patch('tap_typo.typo.requests.post', new=mock_requests_post_get_token)
+    @patch('tap_typo.typo.requests.get', new=mock_requests_get_test_get_simple_streaming_dataset)
+    def test_get_simple_streaming_dataset(self):
+        '''
+        Fetch a simple dataset with 2 records from Typo
+        '''
+        out = None
+        with patch('sys.stdout', new=StringIO()) as mock_stdout, self.assertLogs(LOGGER, level='INFO') as log:
+            tap = TapTypo(config=generate_config(audit_id=None))
+            tap.sync()
+            out = mock_stdout.getvalue()
+
+        self.assertEqual(len(log.output), 4)
+
+        self.assertEqual(out, TEST_GET_SIMPLE_STREAMING_DATASET_OUTPUT)
+
+    @patch('tap_typo.typo.requests.post', new=mock_requests_post_get_token)
+    @patch('tap_typo.typo.requests.get', new=mock_requests_get_test_multi_page_no_limit)
+    def test_multi_page_no_limit(self):
+        '''
+        Fetch two pages of a dataset until records end.
+        '''
+        out = None
+        with patch('sys.stdout', new=StringIO()) as mock_stdout, self.assertLogs(LOGGER, level='INFO') as log:
+            tap = TapTypo(config=generate_config(records_per_page=2))
+            tap.sync()
+            out = mock_stdout.getvalue()
+
+        self.assertEqual(len(log.output), 5)
+
+        self.assertEqual(out, TEST_MULTI_PAGE_NO_LIMIT_OUTPUT)
+
+    @patch('tap_typo.typo.requests.post', new=mock_requests_post_get_token)
+    @patch('tap_typo.typo.requests.get', new=mock_requests_get_test_resume_with_state)
+    def test_resume_with_state(self):
+        '''
+        Resume sync by providing state input
+        '''
+        out = None
+        with patch('sys.stdout', new=StringIO()) as mock_stdout, self.assertLogs(LOGGER, level='INFO') as log:
+            tap = TapTypo(
+                config=generate_config(records_per_page=5),
+                state={
+                    'bookmarks': {
+                        'tap-typo-repository-mock_repository-dataset-mock_dataset-audit-123': {
+                            '__typo_record_id': 6
+                        }
                     }
-                ]
-        }
+                })
+            tap.sync()
+            out = mock_stdout.getvalue()
 
-        input_config = {
-            'dataset': 'channel'
-        }
+        self.assertEqual(len(log.output), 4)
 
-        schema_return = init.discover(input_config['dataset'])
-        self.assertEqual(schema_return, expected_return)
+        self.assertEqual(out, TEST_RESUME_WITH_STATE_OUTPUT)
 
 
 if __name__ == '__main__':
