@@ -1,3 +1,5 @@
+[![CircleCI](https://circleci.com/gh/typo-ai/tap-typo.svg?style=shield)](https://circleci.com/gh/typo-ai/tap-typo)
+
 # tap-typo
 
 [Singer](https://singer.io) tap that extracts data from the [Typo](https://www.typo.ai?utm_source=github&utm_medium=tap-typo) platform. The tap produces JSON-formatted data output
