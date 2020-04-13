@@ -104,7 +104,7 @@ A Singer target should output the contents of the value JSON property in a STATE
 To resume from a failed or terminated transfer, you will need create a STATE file from the last line in the redirected output (state-history.txt in our example).  Below is an example command that performs the step to create a STATE file, state.json, from state-history.txt.  You may edit this STATE file as necessary. The STATE file can be used as input to **tap-typo** to resume.
 
 ```bash
-sed -n -e '$p' state-history.txt > state.json
+tail -n 1 state-history.txt > state.json
 ```
 
 Example STATE file:
