@@ -44,7 +44,7 @@ def read(*paths):
 
 setup(
     name='tap-typo',
-    version='0.2.0',
+    version='0.2.1',
     description=(
         'Typo is the intelligent data quality barrier for '
         'enterprise information systems. The Typo tap '
