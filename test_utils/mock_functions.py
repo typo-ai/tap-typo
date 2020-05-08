@@ -72,6 +72,99 @@ def generate_streaming_dataset_header_response():
     }
 
 
+def generate_dataset_listing_response():
+    '''
+    Simple response from dataset listing endpoint
+    '''
+    return [
+        {
+            "id": 1,
+            "created_at": "2020-01-01T01:01:01.000Z",
+            "updated_at": "2020-01-01T01:01:01.000Z",
+            "tenant_id": 1,
+            "name": "mock_dataset",
+            "display_name": "mock_dataset",
+            "repository_id": 1,
+            "type": "Web App",
+            "source": "https://mock-webapp.com",
+            "tablename": "mock-tablename",
+            "total_records": 500,
+            "total_errors": 100,
+            "total_fixes": 0,
+            "total_ignores": 0,
+            "total_actions": 0,
+            "total_good_labels": 0,
+            "total_bad_labels": 0,
+            "total_labels": 0,
+            "config": {
+            },
+            "repository": {
+                "id": 1,
+                "created_at": "2020-01-01T01:01:01.000Z",
+                "updated_at": "2020-01-01T01:01:01.000Z",
+                "name": "mock_repository",
+                "is_enabled": True,
+                "tenant_id": 2
+            },
+            "duplicate_checks": [],
+            "models": [
+                {
+                    "id": 93059,
+                    "created_at": "2020-02-04T15:59:42.297Z",
+                    "updated_at": "2020-02-04T15:59:42.297Z",
+                    "tenant_id": 2,
+                    "repository_id": None,
+                    "dataset_id": 14,
+                    "features": [
+                        "field_1",
+                        "field_2",
+                    ],
+                    "subset_matcher": {},
+                    "algorithm": "isolation-forest",
+                    "algorithm_alias": "multivariate_check_1",
+                    "object_path": "DH32VJ/isolation_forest.joblib",
+                    "weight": 1,
+                    "is_selected": True,
+                    "build_run_id": "02e882d0-4766-11ea-8915-919a227c9964",
+                    "accuracy": None,
+                    "confusion_matrix": None,
+                    "ro_object_path": None
+                },
+                {
+                    "id": 93060,
+                    "created_at": "2020-02-04T15:59:42.899Z",
+                    "updated_at": "2020-02-04T15:59:42.899Z",
+                    "tenant_id": 2,
+                    "repository_id": None,
+                    "dataset_id": 14,
+                    "features": [
+                        "dttm",
+                        "tempend",
+                        "densityor",
+                        "tempstart",
+                        "sysmoddate",
+                        "syslockdate",
+                        "syscreatedate",
+                        "tankendvolcalc",
+                        "dttmutclastticketintrun"
+                    ],
+                    "subset_matcher": {},
+                    "algorithm": "modified-zscore",
+                    "algorithm_alias": "univariate_check_1",
+                    "object_path": "SE74EL/modified_zscore.joblib",
+                    "weight": 1,
+                    "is_selected": True,
+                    "build_run_id": "02e882d0-4766-11ea-8915-919a227c9964",
+                    "accuracy": None,
+                    "confusion_matrix": None,
+                    "ro_object_path": None
+                }
+            ],
+            "schema": {}
+        }
+    ]
+
+
 def generate_audit_dataset_header_response():
     '''
     Audit dataset sample header response
@@ -134,6 +227,84 @@ def generate_audit_dataset_header_response_detailed_schema():
     }
 
 
+def generate_audit_listing_response():
+    '''
+    Simple response from audits listing endpoint
+    '''
+    return {
+        'total': 1,
+        'data': [{
+            'id': 123,
+            'guid': None,
+            'created_at': '2020-01-01T01:01:01.000Z',
+            'updated_at': '2020-01-01T01:01:01.000Z',
+            'tenant_id': 1,
+            'repository_id': 1,
+            'dataset_id': 1,
+            'name': None,
+            'tag': None,
+            'settings': None,
+            'model': None,
+            'total_records': 5000,
+            'total_audited': None,
+            'total_errors': 1000,
+            'started_at': '2020-01-01T01:01:01.000Z',
+            'ended_at': '2020-02-01T01:01:01.000Z',
+            'state': 'COMPLETED',
+            'data_profile': None,
+            'repository': {
+                'id': 1,
+                'created_at': '2020-01-01T01:01:01.000Z',
+                'updated_at': '2020-01-01T01:01:01.000Z',
+                'name': 'mock_repository',
+                'is_enabled': True,
+                'tenant_id': 2
+            },
+            'dataset': {
+                'id': 1,
+                'created_at': '2020-01-01T01:01:01.000Z',
+                'updated_at': '2020-01-01T01:01:01.000Z',
+                'tenant_id': 1,
+                'repository_id': 1,
+                'tablename': 'mock_dataset_table',
+                'name': 'mock_dataset',
+                'display_name': 'mock_dataset',
+                'type': 'Typo DI',
+                'source': 'REST Import',
+                'schema': None,
+                'metadata': {
+                    'schema': {
+                        'field_1': {
+                            'type': 'integer'
+                        },
+                        'field_2': {
+                            'type': 'float'
+                        }
+                    }
+                },
+                'features': {
+                    'field_1': {
+                        'type': 'string'
+                    },
+                    'field_2': {
+                        'type': 'integer'
+                    }
+                },
+                'data_profile': {
+                }
+            },
+            'schema': {
+                'field_1': {
+                    'type': 'integer'
+                },
+                'field_2': {
+                    'type': 'float'
+                }
+            }
+        }]
+    }
+
+
 def generate_streaming_dataset_response(records):
     '''
     Simple streaming dataset response
@@ -149,26 +320,24 @@ def generate_streaming_dataset_response(records):
     }
 
 
-def generate_audit_dataset_response(records):
+def generate_audit_dataset_response(records, data_overrides=None):
     '''
     Simple audit dataset response
     '''
+    data = {
+        'page': 1, 'records_per_page': 1, 'total_pages': 2,
+        'total_records': 5, 'filters': [], 'sort': {},
+        'records': records
+    }
+
+    if (data_overrides):
+        data.update(data_overrides)
+
     return {
         'code': 'GET_AUDIT_RESULTS_SUCCESS',
         'message': 'Get Dataset results success',
-        'data': {
-            'page': 1, 'per_page': 1, 'total_pages': 2,
-            'total_records': 5, 'filters': [], 'sort': {},
-            'records': records
-        }
+        'data': data
     }
-
-
-def mock_tap_get_dataset_information_empty(self):  # pylint: disable=unused-argument
-    '''
-    Mock get_dataset_information
-    '''
-    return [], {}
 
 
 def mock_requests_post_get_token(url, headers, data, timeout):  # pylint: disable=unused-argument
@@ -186,6 +355,12 @@ def mock_requests_get_test_discover_mode(url, headers, params, timeout):  # pyli
     if url == 'https://typo.ai/repositories/mock_repository/datasets/mock_dataset/audits/123':
         return MockRequestResponse(generate_audit_dataset_header_response_detailed_schema(), 200)
 
+    if url == 'https://typo.ai/datasets':
+        return MockRequestResponse(generate_dataset_listing_response(), 200)
+
+    if url == 'https://typo.ai/audits':
+        return MockRequestResponse(generate_audit_listing_response(), 200)
+
     raise Exception('This code should not be reached')
 
 
@@ -197,12 +372,18 @@ def mock_requests_get_test_resume_with_state(url, headers, params, timeout):  # 
     if url == 'https://typo.ai/repositories/mock_repository/datasets/mock_dataset/audits/123':
         return MockRequestResponse(generate_audit_dataset_header_response(), 200)
 
-    if url == 'https://typo.ai/repositories/mock_repository/datasets/mock_dataset/audits/123/results?per_page=5&page=1&__typo_id=gt:6':
-        # tap-typo will resume from record with id 22
+    if url == 'https://typo.ai/repositories/mock_repository/datasets/mock_dataset/audits/123/results?records_per_page=5&page=1&__typo_id=gt:6':
+        # tap-typo will resume from record with id 7
         return MockRequestResponse(generate_audit_dataset_response(
             [generate_record(7, has_errors=True), generate_record(8), generate_record(9),
              generate_record(10), generate_record(11, has_errors=True)]
         ), 200, headers={'Link': ''})
+
+    if url == 'https://typo.ai/datasets':
+        return MockRequestResponse(generate_dataset_listing_response(), 200)
+
+    if url == 'https://typo.ai/audits':
+        return MockRequestResponse(generate_audit_listing_response(), 200)
 
     raise Exception('This code should not be reached')
 
@@ -216,13 +397,19 @@ def mock_requests_get_test_get_simple_streaming_dataset(url, headers, params, ti
     if url == 'https://typo.ai/repositories/mock_repository/datasets/mock_dataset':
         return MockRequestResponse(generate_streaming_dataset_header_response(), 200)
 
-    if url == 'https://typo.ai/repositories/mock_repository/datasets/mock_dataset/results?per_page=100&page=1':
+    if url == 'https://typo.ai/repositories/mock_repository/datasets/mock_dataset/results?records_per_page=100&page=1':
         # Return 1st and only results page
         return MockRequestResponse(
             generate_streaming_dataset_response(
                 [generate_record(1, has_errors=True), generate_record(2)]
             ),
             200, headers={'Link': ''})
+
+    if url == 'https://typo.ai/datasets':
+        return MockRequestResponse(generate_dataset_listing_response(), 200)
+
+    if url == 'https://typo.ai/audits':
+        return MockRequestResponse(generate_audit_listing_response(), 200)
 
     raise Exception('This code should not be reached')
 
@@ -236,13 +423,19 @@ def mock_requests_get_test_get_simple_audit_dataset(url, headers, params, timeou
         return MockRequestResponse(generate_audit_dataset_header_response(), 200)
 
     if (url == 'https://typo.ai/repositories/mock_repository/datasets/mock_dataset/audits/123/results' +
-            '?per_page=100&page=1'):
+            '?records_per_page=100&page=1'):
         # Return 1st and only results page
         return MockRequestResponse(
             generate_audit_dataset_response(
                 [generate_record(1, has_errors=True), generate_record(2)]
             ),
             200, headers={'Link': ''})
+
+    if url == 'https://typo.ai/datasets':
+        return MockRequestResponse(generate_dataset_listing_response(), 200)
+
+    if url == 'https://typo.ai/audits':
+        return MockRequestResponse(generate_audit_listing_response(), 200)
 
     raise Exception('This code should not be reached')
 
@@ -256,19 +449,40 @@ def mock_requests_get_test_multi_page_no_limit(url, headers, params, timeout):
         return MockRequestResponse(generate_audit_dataset_header_response(), 200)
 
     # Return 1st page of results
-    if url == 'https://typo.ai/repositories/mock_repository/datasets/mock_dataset/audits/123/results?per_page=2&page=1':
+    if (url == 'https://typo.ai/repositories/mock_repository/datasets/mock_dataset/audits/123/results?'
+            + 'records_per_page=2&page=1'):
         return MockRequestResponse(
             generate_audit_dataset_response(
-                [generate_record(1, has_errors=True), generate_record(2)]
+                [generate_record(1, has_errors=True), generate_record(2)],
+                {'records_per_page': 2, 'total_records': 4}
             ),
-            200, headers={'Link': 'mocklink'})
+            200, headers={'Link': '; rel="next"'})
 
     # Return 2nd page of results
-    if url == 'https://typo.ai/repositories/mock_repository/datasets/mock_dataset/audits/123/results?per_page=2&page=2':
+    if url == 'https://typo.ai/repositories/mock_repository/datasets/mock_dataset/audits/123/results?records_per_page=2&page=2':
         return MockRequestResponse(
             generate_audit_dataset_response(
                 [generate_record(3, has_errors=True), generate_record(4)]
             ),
             200, headers={'Link': ''})
+
+    if url == 'https://typo.ai/datasets':
+        return MockRequestResponse(generate_dataset_listing_response(), 200)
+
+    if url == 'https://typo.ai/audits':
+        return MockRequestResponse(generate_audit_listing_response(), 200)
+
+    raise Exception('This code should not be reached')
+
+
+def mock_requests_get_test_request_token(url, headers, params, timeout):  # pylint: disable=unused-argument
+    '''
+    Mock get requests for test_request_token
+    '''
+    if url == 'https://typo.ai/datasets':
+        return MockRequestResponse(generate_dataset_listing_response(), 200)
+
+    if url == 'https://typo.ai/audits':
+        return MockRequestResponse(generate_audit_listing_response(), 200)
 
     raise Exception('This code should not be reached')
