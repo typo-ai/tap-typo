@@ -17,10 +17,10 @@
 import json
 import sys
 
+from datetime import datetime
 import requests
 import backoff
 import singer
-from datetime import datetime
 from rfc3339 import rfc3339
 
 from tap_typo.logging import log_backoff, log_critical, log_error, log_info
@@ -38,7 +38,6 @@ def get_tap_stream_id(repository, dataset, audit_id):
     '''
     Generates a stream ID from a Dataset name & Audit ID
     '''
-    #stream_id = 'tap-typo-repository-{}-dataset-{}'.format(repository, dataset)
     stream_id = f'tap-typo-{repository}-{dataset}'
     if audit_id:
         return f'{stream_id}-audit-{audit_id}'
@@ -94,7 +93,7 @@ class TapTypo():
         '''
         Requests Typo for the list of available Dataset's
         '''
-        
+
         url = '{}/audits'.format(
             self.base_url)
 
@@ -106,12 +105,12 @@ class TapTypo():
 
         # NOTE: Filter datasets that has models.
 
-        def transform_dataset(d):
-            d['is_audit'] = True
-            return d
-        
+        def transform_dataset(dataset):
+            dataset['is_audit'] = True
+            return dataset
+
         data = [transform_dataset(d) for d in data if d['state'] == 'COMPLETED' and d['schema'] is not None]
-        
+
         # Check Status
         if status != 200:
             log_critical(data['message'])
@@ -123,7 +122,6 @@ class TapTypo():
         '''
         Requests Typo for the list of available Dataset's
         '''
-        
         url = '{}/datasets'.format(
             self.base_url)
 
@@ -133,22 +131,21 @@ class TapTypo():
         status = response[0]
         data = response[2]
 
-        # NOTE: Filter datasets that has models.
+        # NOTE: Filter datasets that have models.
 
-        def transform_dataset(d):
-            d['is_audit'] = False
-            return d
-        
+        def transform_dataset(dataset):
+            dataset['is_audit'] = False
+            return dataset
+
         data = [transform_dataset(d) for d in data if len(d['models']) > 0]
-        
+
         # Check Status
         if status != 200:
             log_critical(data['message'])
             sys.exit(1)
 
         return data
-    
-    
+
     def fetch_dataset_information(self):
         '''
         Requests Typo for an Audit or Streaming Dataset's basic information
@@ -174,7 +171,6 @@ class TapTypo():
         return data
 
     def get_catalog_entry(self, data):
-        
         key_properties, schema, sqltypes, datetime_formats = self.compute_schema(data)
 
         repository = data['repository']['name']
@@ -206,7 +202,7 @@ class TapTypo():
                 row_count = data['total_records']
                 metadata[index]['metadata']['row-count'] = row_count
                 metadata[index]['metadata']['valid-replication-keys'] = [TYPO_RECORD_ID_PROPERTY]
-                metadata[index]['metadata']['selected-by-default'] = False # Datasets are not selected by default.
+                metadata[index]['metadata']['selected-by-default'] = False  # Datasets are not selected by default.
             else:
                 metadata[index]['metadata']['selected-by-default'] = True   # Fields are selected by default.
                 field_name = metadata[index]['breadcrumb'][1]
@@ -216,13 +212,13 @@ class TapTypo():
             index += 1
 
         return {
-                'stream': stream_id,
-                'tap_stream_id': stream_id,
-                'schema': schema,
-                'metadata': metadata,
-                'key_properties': key_properties,
-                'bookmark_properties': [TYPO_RECORD_ID_PROPERTY]
-            }
+            'stream': stream_id,
+            'tap_stream_id': stream_id,
+            'schema': schema,
+            'metadata': metadata,
+            'key_properties': key_properties,
+            'bookmark_properties': [TYPO_RECORD_ID_PROPERTY]
+        }
 
     def compute_schema(self, data):
         typo_schema = data.get('schema')
@@ -237,8 +233,8 @@ class TapTypo():
             'date-time': 'datetime',
             'boolean': 'bool'
         }
-        
-        DEFAULT_SQL_TYPE = 'varchar(255)'
+
+        default_sql_type = 'varchar(255)'
 
         sql_types = {}
         datetime_formats = {}
@@ -265,16 +261,17 @@ class TapTypo():
                             datetime_formats[field] = spec.get('format')
                     else:
                         field_type = 'string'
-                    
+
                     if field_format:
                         schema_properties[field] = {
                             'type': ['null', field_type],
-                            'format': field_format }
+                            'format': field_format
+                        }
                     else:
                         schema_properties[field] = {
                             'type': ['null', field_type]
                         }
-                    sql_types[field] = available_sql_types.get(field_type, DEFAULT_SQL_TYPE)
+                    sql_types[field] = available_sql_types.get(field_type, default_sql_type)
                 else:
                     schema_properties[field] = {}
 
@@ -463,7 +460,7 @@ class TapTypo():
         if self.start_record_id != OPTION_DISABLED:
             start_record_id_filter = '&__typo_id=gt:{}'.format(self.start_record_id)
 
-        status, headers, data = self.api_get_request('{}?per_page={}&page={}{}'.format(
+        status, headers, data = self.api_get_request('{}?records_per_page={}&page={}{}'.format(
             base_url, self.records_per_page, page_number, start_record_id_filter))
 
         # Check Status
@@ -520,7 +517,6 @@ class TapTypo():
                 self.stream_id, self.records_per_page,
                 ' Record limit: {}.'.format(self.record_limit) if self.record_limit != OPTION_DISABLED else ''))
 
-
     def sync_stream(self, stream):
         self.key_properties = stream['key_properties']
         self.schema = stream['schema']
@@ -548,7 +544,8 @@ class TapTypo():
         rfc3339_fields_format = {}
         if self.output_rfc3339_datetime:
             for field_path, field_metadata in stream_metadata.items():
-                if field_path and 'datetime-format' in field_metadata:  # NOTE: Checking for tuples that are not empty that represent field metadata
+                # NOTE: Checking for tuples that are not empty that represent field metadata
+                if field_path and 'datetime-format' in field_metadata:
                     field_name = field_path[1]
                     rfc3339_fields_format[field_name] = field_metadata['datetime-format']
 
@@ -599,7 +596,6 @@ class TapTypo():
         '''
         Parse every stream in the catalog, fetch data from Typo and send to stdout
         '''
-        
         if catalog_mode:
             selected_streams = self.get_selected_streams()
             for stream in self.catalog['streams']:
@@ -609,7 +605,8 @@ class TapTypo():
                 self.sync_stream(stream)
         else:
             if not self.repository and not self.dataset:
-                 log_info('Nothing to do as not running in catalog mode and repository, dataset and/or audit_id weren\'t specified in the config file.')
+                log_info('Nothing to do as not running in catalog mode and repository,'
+                         + ' dataset and/or audit_id weren\'t specified in the config file.')
             else:
                 repository = self.repository
                 dataset = self.dataset
@@ -617,7 +614,7 @@ class TapTypo():
                 stream_id = get_tap_stream_id(repository, dataset, audit_id)
                 streams = [stream for stream in self.catalog['streams'] if stream['tap_stream_id'] == stream_id]
                 if len(streams) == 0:
-                    log_info('Nothing do to. Cannot find a stream for the provided repository, dataset and audit_id config parameters.')
+                    log_info('Nothing do to. Cannot find a stream for the provided repository, '
+                             + 'dataset and audit_id config parameters.')
                     return
                 self.sync_stream(streams[0])
-            

@@ -43,10 +43,10 @@ import singer
 
 from tap_typo.typo import TapTypo
 from test_utils.mock_functions import (
-    mock_tap_get_dataset_information_empty, mock_requests_get_test_discover_mode,
+    mock_requests_get_test_discover_mode,
     mock_requests_get_test_resume_with_state, mock_requests_get_test_get_simple_audit_dataset,
     mock_requests_get_test_get_simple_streaming_dataset, mock_requests_get_test_multi_page_no_limit,
-    mock_requests_post_get_token
+    mock_requests_post_get_token, mock_requests_get_test_request_token
 )
 from test_utils.outputs import (
     TEST_DISCOVER_MODE_OUTPUT, TEST_RESUME_WITH_STATE_OUTPUT,
@@ -66,8 +66,7 @@ class TestTapTypo(unittest.TestCase):
     maxDiff = None  # Get the full diff when debugging tests
 
     @patch('tap_typo.typo.requests.post')
-    # Mock get_dataset_information because it's called when TapTypo is initialized
-    @patch('tap_typo.typo.TapTypo.get_dataset_information', new=mock_tap_get_dataset_information_empty)
+    @patch('tap_typo.typo.requests.get', new=mock_requests_get_test_request_token)
     def test_request_token(self, mock_post):
         '''
         Request an access token from Typo
@@ -111,7 +110,6 @@ class TestTapTypo(unittest.TestCase):
         - Conversion of typo-provided field types into JSON schema types.
         - Detection of key properties from typo-provided data.
         '''
-
         out = None
 
         with patch('sys.stdout', new=StringIO()) as mock_stdout, self.assertLogs(LOGGER, level='INFO') as log:
@@ -120,7 +118,6 @@ class TestTapTypo(unittest.TestCase):
             out = mock_stdout.getvalue()
 
         self.assertEqual(len(log.output), 1)
-
         self.assertEqual(out, TEST_DISCOVER_MODE_OUTPUT)
 
     @patch('tap_typo.typo.requests.post', new=mock_requests_post_get_token)
@@ -136,7 +133,6 @@ class TestTapTypo(unittest.TestCase):
             out = mock_stdout.getvalue()
 
         self.assertEqual(len(log.output), 4)
-
         self.assertEqual(out, TEST_GET_SIMPLE_AUDIT_DATASET_OUTPUT)
 
     @patch('tap_typo.typo.requests.post', new=mock_requests_post_get_token)
@@ -152,7 +148,6 @@ class TestTapTypo(unittest.TestCase):
             out = mock_stdout.getvalue()
 
         self.assertEqual(len(log.output), 4)
-
         self.assertEqual(out, TEST_GET_SIMPLE_STREAMING_DATASET_OUTPUT)
 
     @patch('tap_typo.typo.requests.post', new=mock_requests_post_get_token)
@@ -168,7 +163,6 @@ class TestTapTypo(unittest.TestCase):
             out = mock_stdout.getvalue()
 
         self.assertEqual(len(log.output), 5)
-
         self.assertEqual(out, TEST_MULTI_PAGE_NO_LIMIT_OUTPUT)
 
     @patch('tap_typo.typo.requests.post', new=mock_requests_post_get_token)
@@ -183,7 +177,7 @@ class TestTapTypo(unittest.TestCase):
                 config=generate_config(records_per_page=5),
                 state={
                     'bookmarks': {
-                        'tap-typo-repository-mock_repository-dataset-mock_dataset-audit-123': {
+                        'tap-typo-mock_repository-mock_dataset-audit-123': {
                             '__typo_record_id': 6
                         }
                     }
@@ -192,7 +186,6 @@ class TestTapTypo(unittest.TestCase):
             out = mock_stdout.getvalue()
 
         self.assertEqual(len(log.output), 4)
-
         self.assertEqual(out, TEST_RESUME_WITH_STATE_OUTPUT)
 
 
